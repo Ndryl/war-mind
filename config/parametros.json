@@ -1,0 +1,33 @@
+{
+  "mapa": {
+    "largura": 20,
+    "altura": 20
+  },
+  "simulacao": {
+    "limite_turnos": 100,
+    "quantidade_barcos": 3
+  },
+  "barco": {
+    "raio_detecao_visual": 2
+  },
+  "pesca": {
+    "quantidade_pontos": 10,
+    "tempo_cooldown": 5,
+    "probabilidades_captura": {
+      "1_peixe": 0.60,
+      "2_peixes": 0.30,
+      "3_peixes": 0.10
+    },
+    "multiplicadores_distancia": {
+      "aguas_rasas": {"distancia_max": 5, "multiplicador": 1},
+      "aguas_intermediarias": {"distancia_max": 10, "multiplicador": 2},
+      "aguas_profundas": {"distancia_min": 11, "multiplicador": 3}
+    }
+  },
+  "obstaculos": {
+    "recifes": {"quantidade": 15, "penalidade_turnos": 0, "visivel": true},
+    "tubaroes": {"quantidade": 5, "penalidade_turnos": 1, "visivel": false},
+    "redemoinhos": {"quantidade": 3, "penalidade_turnos": 2, "visivel": false},
+    "bancos_areia": {"quantidade": 4, "penalidade_turnos": 3, "visivel": false}
+  }
+}
