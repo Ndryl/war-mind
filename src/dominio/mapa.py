@@ -19,3 +19,6 @@ class Mapa:
         if 0 <= x < self.largura and 0 <= y < self.altura:
             return self.grid[y][x]
         return None
+    
+    def posicao_valida(self, x, y):
+        return 0 <= x < self.largura and 0 <= y < self.altura

@@ -24,7 +24,7 @@ class MotorSimulacao:
             ExibicaoTerminal.limpar_tela()
             ExibicaoTerminal.desenhar_mapa(self.mapa, self.barcos, self.turno_atual)
             self._processar_turno()
-            time.sleep(0.1) # Pausa pequena para conseguir visualizar
+            time.sleep(0.5) # Pausa pequena para conseguir visualizar
         
         ExibicaoTerminal.limpar_tela()
         ExibicaoTerminal.desenhar_mapa(self.mapa, self.barcos, self.turno_atual)
@@ -46,6 +46,12 @@ class MotorSimulacao:
         
         # Vamos usar um modelo estocástico simplificado para movimentar os barcos
         for barco in self.barcos:
+            dx, dy = random.choice([(0,1), (0,-1), (1,0), (-1,0), (0,0)])
+            novo_x, novo_y = barco.x + dx, barco.y + dy
+
+            if self.mapa.posicao_valida(novo_x, novo_y) and self.mapa.obter_celula(novo_x, novo_y).navegavel:
+                barco.x, barco.y = novo_x, novo_y
+
             if random.random() > 0.5:
                 # Simular captura e retorno rápido para dar pontos a eles
                 pts = random.randint(1, 3) * random.randint(1, 3)
