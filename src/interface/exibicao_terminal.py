@@ -3,7 +3,7 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.text import Text
 from src.dominio import Mapa, Porto, PontoPesca, Barco, ObstaculoVisivel, ObstaculoOculto
-
+import sys
 class ExibicaoTerminal:
     console = Console()
 
@@ -59,12 +59,12 @@ class ExibicaoTerminal:
             
             table.add_row(*linha)
 
-        # Envolve o mapa em um painel estilizado
+        # Envolve o mapa em um painel estilizado    
         cls.console.print(Panel(table, title=f"[bold white]Turno {turno_atual}[/bold white]", expand=False))
 
     @classmethod
-    def exibir_relatorio(cls, barcos: list):
-        table = Table(title="Relatório Final", header_style="bold magenta")
+    def exibir_relatorio(cls, barcos: list, titulo="Relatório Final"):
+        table = Table(title=titulo, header_style="bold magenta")
         table.add_column("Posição", justify="center")
         table.add_column("ID Barco", justify="center")
         table.add_column("Pontos", justify="right")
@@ -76,6 +76,8 @@ class ExibicaoTerminal:
         
         cls.console.print(table)
     
-    @classmethod
-    def limpar_tela(cls):
-        cls.console.clear()
+    @staticmethod
+    def limpar_tela():
+        # Move o cursor para o topo esquerdo sem piscar a tela
+        sys.stdout.write('\033[H\033[0J')
+        sys.stdout.flush()
