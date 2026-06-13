@@ -1,6 +1,9 @@
 import random
 from src.dominio import Mapa, Porto, PontoPesca, ObstaculoVisivel, ObstaculoOculto, Barco
 
+# 1. IMPORT CORRIGIDO: Agora trazendo as duas estratégias
+from src.inteligencia import EstrategiaBFS, EstrategiaAStar, EstrategiaDFS
+
 class FabricaSimulacao:
     """
     Utiliza uma lógica Data-Driven (baseada no dicionário de config)
@@ -26,6 +29,10 @@ class FabricaSimulacao:
         portos = []
         barcos = []
         espacamento = (largura - 2) // qtd_barcos
+
+        # Lista de inteligências
+        estrategias_disponiveis = [EstrategiaAStar(), EstrategiaBFS(), EstrategiaDFS()]
+        
         for i in range(qtd_barcos):
             x = 1 + i * espacamento + espacamento // 2
             porto = Porto(id_porto=i+1, x=x, y=0)
@@ -33,6 +40,10 @@ class FabricaSimulacao:
             mapa.obter_celula(x, 0).ocupar(porto)
             
             barco = Barco(id_barco=i+1, porto_origem=porto)
+            
+            # 2. INJEÇÃO CORRIGIDA: Entregando a inteligência para o barco
+            barco.estrategia = estrategias_disponiveis[i % len(estrategias_disponiveis)]
+            
             barcos.append(barco)
 
         # Áreas livres para spawn: x entre 1 e largura-2, y entre 1 e altura-2

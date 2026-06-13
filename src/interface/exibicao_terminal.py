@@ -4,19 +4,19 @@ from rich.panel import Panel
 from rich.text import Text
 from src.dominio import Mapa, Porto, PontoPesca, Barco, ObstaculoVisivel, ObstaculoOculto
 import sys
+
 class ExibicaoTerminal:
     console = Console()
 
-    # Mapeamento de símbolos com estilos do Rich (cores)
+    # Mapeamento de símbolos com estilos do Rich (cores) e Emojis
     ESTILOS = {
-        'agua_livre': ('~', 'blue'),
-        'borda': ('#', 'bold white'),
-        'porto': ('P', 'bold yellow'),
-        'barco': ('B', 'bold green'),
-        'ponto_pesca': ('F', 'green'),
-        'ponto_pesca_cooldown': ('f', 'red'),
-        'obstaculo_visivel': ('R', 'red'),
-        'agua_default': ('~', 'blue')
+        'agua_livre': ('~', 'blue'),            # Onda para água
+        'borda': ('⛰️', 'bold white'),            # Montanha para os limites do mapa
+        'porto': ('⚓', 'bold yellow'),           # Âncora para o porto
+        'ponto_pesca': ('🐟', 'green'),           # Peixe disponível
+        'ponto_pesca_cooldown': ('⏳', 'red'),    # Ampulheta indicando que está recarregando
+        'obstaculo_visivel': ('🪨', 'red'),       # Pedra para obstáculo
+        'agua_default': ('🌊', 'blue')
     }
 
     @classmethod
@@ -33,9 +33,20 @@ class ExibicaoTerminal:
         for y in range(mapa.altura):
             linha = []
             for x in range(mapa.largura):
+                # --- LOGICA DOS BARCOS ALTERADA AQUI ---
                 if (x, y) in pos_barcos:
-                    simbolo, cor = cls.ESTILOS['barco']
-                    linha.append(f"[{cor}]{simbolo}[/{cor}]")
+                    barco_atual = pos_barcos[(x, y)]
+                    
+                    # Descobre a primeira letra do algoritmo do barco (A ou B)
+                    if hasattr(barco_atual, 'estrategia') and barco_atual.estrategia:
+                        nome_classe = barco_atual.estrategia.__class__.__name__
+                        letra_algoritmo = nome_classe.replace("Estrategia", "")[0].upper() # Pega 'A' ou 'B'
+                    else:
+                        letra_algoritmo = '?' # Se não tiver estratégia ativa
+
+                    # Define uma cor de destaque para a letra do barco (Ex: Verde Negrito)
+                    cor = 'bold green'
+                    linha.append(f"[{cor}]{letra_algoritmo}[/{cor}]")
                     continue
 
                 celula = mapa.obter_celula(x, y)
@@ -67,12 +78,24 @@ class ExibicaoTerminal:
         table = Table(title=titulo, header_style="bold magenta")
         table.add_column("Posição", justify="center")
         table.add_column("ID Barco", justify="center")
+        
+        # Nova coluna adicionada
+        table.add_column("Algoritmo", justify="center", style="cyan")
+        
         table.add_column("Pontos", justify="right")
         table.add_column("Carga", justify="right")
 
         barcos_ordenados = sorted(barcos, key=lambda b: b.pontuacao, reverse=True)
         for i, b in enumerate(barcos_ordenados):
-            table.add_row(f"{i+1}º", str(b.id_barco), str(b.pontuacao), str(b.carga))
+            
+            # Pega o nome da estratégia e remove a palavra "Estrategia" para ficar bonito na tabela
+            if hasattr(b, 'estrategia') and b.estrategia:
+                nome_algoritmo = b.estrategia.__class__.__name__.replace("Estrategia", "")
+            else:
+                nome_algoritmo = "Nenhum"
+
+            # Passa o nome do algoritmo para a linha da tabela
+            table.add_row(f"{i+1}º", str(b.id_barco), nome_algoritmo, str(b.pontuacao), str(b.carga))
         
         cls.console.print(table)
     

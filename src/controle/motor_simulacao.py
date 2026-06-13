@@ -4,9 +4,7 @@ import sys
 import select
 import termios
 import tty
-
 from src.dominio import Mapa, Porto, PontoPesca, Barco, ObstaculoVisivel, ObstaculoOculto
-from src.inteligencia import IEstrategiaBusca
 from src.interface import ExibicaoTerminal
 
 class MotorSimulacao:
@@ -14,11 +12,10 @@ class MotorSimulacao:
     Orquestra o laço do jogo, inicializa turnos e coleta placar.
     Coordena as atualizações do grid a cada turno e move os barcos.
     """
-    def __init__(self, config: dict, mapa: Mapa, barcos: list, estrategia_padrao: IEstrategiaBusca, pontos_pesca: list):
+    def __init__(self, config: dict, mapa: Mapa, barcos: list, pontos_pesca: list):
         self.config = config
         self.mapa = mapa
         self.barcos = barcos
-        self.estrategia = estrategia_padrao
         self.pontos_pesca = pontos_pesca
         self.limite_turnos = config['simulacao']['limite_turnos']
         self.turno_atual = 0
@@ -110,7 +107,7 @@ class MotorSimulacao:
         ExibicaoTerminal.limpar_tela()
         ExibicaoTerminal.desenhar_mapa(self.mapa, self.barcos, self.turno_atual)
         ExibicaoTerminal.exibir_relatorio(self.barcos, titulo="Relatório Final")
-        
+
     def _processar_turno(self):
         # Atualiza cooldowns globais
         for ponto in self.pontos_pesca:

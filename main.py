@@ -1,6 +1,5 @@
 import os
 from src.criacao import LeitorConfig, FabricaSimulacao
-from src.inteligencia import EstrategiaBFS
 from src.controle import MotorSimulacao
 
 def main():
@@ -11,9 +10,7 @@ def main():
     fabrica = FabricaSimulacao(config)
     mapa, portos, barcos, pontos_pesca, obstaculos = fabrica.criar_mapa_e_elementos()
 
-    estrategia_bfs = EstrategiaBFS()
-
-    motor = MotorSimulacao(config, mapa, barcos, estrategia_bfs, pontos_pesca)
+    motor = MotorSimulacao(config, mapa, barcos, pontos_pesca)
     motor.executar()
 
 if __name__ == "__main__":
