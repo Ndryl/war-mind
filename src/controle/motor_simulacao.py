@@ -12,7 +12,7 @@ class MotorSimulacao:
     Orquestra o laço do jogo, inicializa turnos e coleta placar.
     Coordena as atualizações do grid a cada turno e move os barcos.
     """
-    def __init__(self, config: dict, mapa: Mapa, barcos: list, pontos_pesca: list):
+    def __init__(self, config: dict, mapa: Mapa, barcos: list, pontos_pesca: list, historico_boats: list):
         self.config = config
         self.mapa = mapa
         self.barcos = barcos
@@ -22,6 +22,7 @@ class MotorSimulacao:
         # Nova variável para lembrar os avisos mesmo quando o jogo estiver pausado 🧠
         self.ultimos_avisos = [] 
 
+        self.historico = historico_boats 
 
     def executar(self):
         t = 0
@@ -159,6 +160,13 @@ class MotorSimulacao:
                 barco.adicionar_pontuacao(pts)
                 barco.carga += random.randint(1, 2)
                 self.ultimos_avisos.append(f"🐟 [bold green]Barco {barco.id_barco}[/bold green] pescou com sucesso!")
+
+            atualizacao_historico = {
+                'turno': self.turno_atual,
+                'barco': barco.id_barco,
+                'pontuacao': barco.pontuacao
+            }
+            self.historico.append(atualizacao_historico)
 
         # 4. Imprime os avisos acumulados imediatamente no turno normal
         if self.ultimos_avisos:
