@@ -19,6 +19,8 @@ class MotorSimulacao:
         self.pontos_pesca = pontos_pesca
         self.limite_turnos = config['simulacao']['limite_turnos']
         self.turno_atual = 0
+        # Nova variável para lembrar os avisos mesmo quando o jogo estiver pausado 🧠
+        self.ultimos_avisos = [] 
 
 
     def executar(self):
@@ -71,6 +73,12 @@ class MotorSimulacao:
                         ExibicaoTerminal.desenhar_mapa(self.mapa, self.barcos, self.turno_atual)
                         ExibicaoTerminal.exibir_relatorio(self.barcos, titulo="Relatório Parcial (PAUSADO)")
                         
+                        # --- EXIBE OS AVISOS NA PAUSA AQUI ---
+                        if self.ultimos_avisos:
+                            print("\r")
+                            for aviso in self.ultimos_avisos:
+                                ExibicaoTerminal.console.print(aviso)
+                        
                         # Mostra os controles na tela para você não esquecer
                         print("\r\n[ 'P' Play/Pause | 'S' Passo-a-Passo | 'Q' Sair | '+' e '-' Velocidade ]\r")
                         sys.stdout.flush()
@@ -113,16 +121,48 @@ class MotorSimulacao:
         for ponto in self.pontos_pesca:
             ponto.atualizar_cooldown()
 
-        # Logica simplificada de um turno
+        # Limpa os avisos antigos para começar o novo turno do zero
+        self.ultimos_avisos = []
+
+        # Logica de movimentação e colisão de cada barco
         for barco in self.barcos:
             dx, dy = random.choice([(0,1), (0,-1), (1,0), (-1,0), (0,0)])
+            
+            if dx == 0 and dy == 0:
+                continue
+
             novo_x, novo_y = barco.x + dx, barco.y + dy
 
-            if self.mapa.posicao_valida(novo_x, novo_y) and self.mapa.obter_celula(novo_x, novo_y).navegavel:
-                barco.x, barco.y = novo_x, novo_y
+            # 1. Verificação de Limites do Mapa
+            if not self.mapa.posicao_valida(novo_x, novo_y):
+                self.ultimos_avisos.append(f"⚠️  [bold yellow]Barco {barco.id_barco}[/bold yellow] tentou sair dos limites do mapa!")
+                continue
 
-            if random.random() > 0.5:
-                # Simular captura e retorno rápido para dar pontos a eles
-                pts = random.randint(1, 3) * random.randint(1, 3)
+            celula = self.mapa.obter_celula(novo_x, novo_y)
+
+            # 2. Verificação de Obstáculos ou Bloqueios
+            if not celula.navegavel:
+                if celula.conteudo is not None:
+                    nome_obstaculo = celula.conteudo.__class__.__name__
+                    if "Obstaculo" in nome_obstaculo:
+                        nome_obstaculo = "um Obstáculo 🪨"
+                    self.ultimos_avisos.append(f"💥 [bold red]Barco {barco.id_barco}[/bold red] bateu em {nome_obstaculo} na posição ({novo_x}, {novo_y})!")
+                else:
+                    self.ultimos_avisos.append(f"💥 [bold red]Barco {barco.id_barco}[/bold red] colidiu com a costa/borda do mapa!")
+                continue
+
+            # 3. Movimento bem-sucedido
+            barco.x, barco.y = novo_x, novo_y
+
+            if random.random() > 0.7:
+                pts = random.randint(1, 3)
                 barco.adicionar_pontuacao(pts)
-                barco.carga += random.randint(1, 3)
+                barco.carga += random.randint(1, 2)
+                self.ultimos_avisos.append(f"🐟 [bold green]Barco {barco.id_barco}[/bold green] pescou com sucesso!")
+
+        # 4. Imprime os avisos acumulados imediatamente no turno normal
+        if self.ultimos_avisos:
+            print("\r")
+            for aviso in self.ultimos_avisos:
+                ExibicaoTerminal.console.print(aviso)
+            sys.stdout.flush()
