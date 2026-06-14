@@ -1,2 +1,7 @@
 # Ignora todas as pastas __pycache__ no projeto
 __pycache__/
+
+desempenho_total.png
+desempenho_BFS.png
+desempenho_DFS.png
+desempenho_AStar.png
