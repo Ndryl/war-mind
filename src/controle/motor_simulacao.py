@@ -99,11 +99,44 @@ class MotorSimulacao:
         ExibicaoTerminal.exibir_relatorio(self.barcos, titulo="Relatório Final")
 
     def _obter_peixe_mais_proximo(self, barco) -> PontoPesca:
-        """Busca o peixe ativo mais próximo do barco usando Distância de Manhattan"""
+        """
+        Busca Inteligente por Custo-Benefício (Densidade de Cardumes).
+        O barco avalia a distância até o peixe e subtrai um bônus se houver muitos outros peixes ao redor dele.
+        """
         peixes_ativos = [p for p in self.pontos_pesca if not getattr(p, 'em_cooldown', False)]
         if not peixes_ativos:
             return None
-        return min(peixes_ativos, key=lambda p: abs(barco.x - p.x) + abs(barco.y - p.y))
+
+        melhor_peixe = None
+        melhor_pontuacao_custo = float('inf') # Queremos o MENOR custo possível
+
+        # --- PARÂMETROS DA IA DE CARDUME --- ⚙️
+        raio_cardume = 4       # Quantos quadrados de distância formam a "vizinhança" de um peixe
+        peso_aglomeracao = 3.0 # Quantos "passos virtuais" cada peixe vizinho desconta da viagem
+
+        for alvo_potencial in peixes_ativos:
+            # 1. Calcula a distância real até o alvo
+            distancia_ate_alvo = abs(barco.x - alvo_potencial.x) + abs(barco.y - alvo_potencial.y)
+
+            # 2. Conta quantos "amigos" esse peixe tem em volta dele
+            vizinhos = 0
+            for outro_peixe in peixes_ativos:
+                if outro_peixe is not alvo_potencial:
+                    dist_entre_peixes = abs(alvo_potencial.x - outro_peixe.x) + abs(alvo_potencial.y - outro_peixe.y)
+                    if dist_entre_peixes <= raio_cardume:
+                        vizinhos += 1
+
+            # 3. Calcula o Custo-Benefício final
+            # Se for muito longe, a distância é alta. 
+            # Mas se tiver muitos vizinhos, o bônus de aglomeração reduz esse custo drasticamente!
+            custo_beneficio = distancia_ate_alvo - (vizinhos * peso_aglomeracao)
+
+            # 4. Verifica se é a melhor oferta do mercado até agora
+            if custo_beneficio < melhor_pontuacao_custo:
+                melhor_pontuacao_custo = custo_beneficio
+                melhor_peixe = alvo_potencial
+
+        return melhor_peixe
 
     def _processar_turno(self):
         # 1. Atualiza cooldowns dos peixes
