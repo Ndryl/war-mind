@@ -37,7 +37,7 @@ class PerformanceTracker:
         plt.figure(figsize=(10, 6))
         for barco_id, dados in self._history.items():
             turnos, pontuacoes = zip(*dados) 
-            plt.plot(turnos, pontuacoes, marker='o', label=f'barco {barco_id}')
+            plt.plot(turnos, pontuacoes, marker='o', label=f'barco {'AStar' if barco_id == 1 else 'BFS' if barco_id == 2 else 'DFS' if barco_id == 3 else f'Barco {barco_id}'}')
 
         plt.title('Evolucao da pontuacao dos barcos ao longo dos turnos')
         plt.xlabel('Turno')
@@ -46,4 +46,45 @@ class PerformanceTracker:
         plt.grid(True)
         plt.legend()
         plt.tight_layout()
+        
+        plt.savefig('desempenho_total.png')
+        
         plt.show()
+
+    def plot_performance_individual(self):
+        """Gera um gráfico de linha em janelas separadas para cada barco"""
+        
+        for barco_id, dados in self._history.items():
+            # Define o nome do barco com base no ID
+            if barco_id == 1:
+                nome_barco = 'AStar'
+            elif barco_id == 2:
+                nome_barco = 'BFS'
+            elif barco_id == 3:
+                nome_barco = 'DFS'
+            else:
+                nome_barco = f'Barco {barco_id}'
+
+            # Separa os turnos e as pontuações
+            turnos, pontuacoes = zip(*dados) 
+
+            # Cria uma NOVA figura para este barco específico
+            plt.figure(figsize=(8, 5))
+            
+            # Plota os dados
+            plt.plot(turnos, pontuacoes, marker='o', label=nome_barco)
+
+            # Configurações visuais do gráfico
+            plt.title(f'Evolução da pontuação - {nome_barco}')
+            plt.xlabel('Turno')
+            plt.ylabel('Pontuação')
+            plt.xticks(range(0, self._max_turn + 1, 10))
+            plt.grid(True)
+            plt.legend()
+            plt.tight_layout()
+
+            nome_arquivo = f'desempenho_{nome_barco}.png'
+            plt.savefig(nome_arquivo)
+
+            # Exibe o gráfico atual antes de ir para o próximo barco do loop
+            plt.show()

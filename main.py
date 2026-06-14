@@ -20,6 +20,7 @@ def main():
     performance = PerformanceTracker()
     performance.load_history_from_engine(motor.historico)
     performance.plot_performance()
+    performance.plot_performance_individual()
 
 
 if __name__ == "__main__":
