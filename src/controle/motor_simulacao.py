@@ -100,44 +100,57 @@ class MotorSimulacao:
 
     def _obter_peixe_mais_proximo(self, barco) -> PontoPesca:
         """
-        Busca Inteligente por Custo-Benefício (Densidade de Cardumes).
-        O barco avalia a distância até o peixe e subtrai um bônus se houver muitos outros peixes ao redor dele.
+        Busca Inteligente Suprema: Custo-Benefício + Análise de Concorrência.
+        O barco avalia distância, densidade de cardumes e se algum adversário vai chegar antes!
         """
         peixes_ativos = [p for p in self.pontos_pesca if not getattr(p, 'em_cooldown', False)]
         if not peixes_ativos:
             return None
 
         melhor_peixe = None
-        melhor_pontuacao_custo = float('inf') # Queremos o MENOR custo possível
+        melhor_pontuacao_custo = float('inf')
 
-        # --- PARÂMETROS DA IA DE CARDUME --- ⚙️
-        raio_cardume = 4       # Quantos quadrados de distância formam a "vizinhança" de um peixe
-        peso_aglomeracao = 3.0 # Quantos "passos virtuais" cada peixe vizinho desconta da viagem
+        # --- PARÂMETROS DA INTELIGÊNCIA --- ⚙️
+        raio_cardume = 4             # Distância para considerar que peixes estão "juntos"
+        peso_aglomeracao = 3.0       # Quantos passos um peixe vizinho desconta do custo
+        penalidade_concorrencia = 50 # O "medo" de perder a corrida. Quanto maior, mais ele desiste rápido.
 
         for alvo_potencial in peixes_ativos:
-            # 1. Calcula a distância real até o alvo
-            distancia_ate_alvo = abs(barco.x - alvo_potencial.x) + abs(barco.y - alvo_potencial.y)
+            # 1. ESFORÇO: Minha distância até o alvo
+            minha_distancia = abs(barco.x - alvo_potencial.x) + abs(barco.y - alvo_potencial.y)
 
-            # 2. Conta quantos "amigos" esse peixe tem em volta dele
+            # 2. LUCRO: Bônus de Cardume (Aglomeração)
             vizinhos = 0
             for outro_peixe in peixes_ativos:
                 if outro_peixe is not alvo_potencial:
-                    dist_entre_peixes = abs(alvo_potencial.x - outro_peixe.x) + abs(alvo_potencial.y - outro_peixe.y)
-                    if dist_entre_peixes <= raio_cardume:
+                    dist = abs(alvo_potencial.x - outro_peixe.x) + abs(alvo_potencial.y - outro_peixe.y)
+                    if dist <= raio_cardume:
                         vizinhos += 1
 
-            # 3. Calcula o Custo-Benefício final
-            # Se for muito longe, a distância é alta. 
-            # Mas se tiver muitos vizinhos, o bônus de aglomeração reduz esse custo drasticamente!
-            custo_beneficio = distancia_ate_alvo - (vizinhos * peso_aglomeracao)
+            # 3. CONCORRÊNCIA: Visão de Jogo (Onde estão os adversários?) 👁️
+            dist_inimigo_mais_proximo = float('inf')
+            
+            for inimigo in self.barcos:
+                if inimigo.id_barco != barco.id_barco: # Não compara com si mesmo
+                    dist_inimigo = abs(inimigo.x - alvo_potencial.x) + abs(inimigo.y - alvo_potencial.y)
+                    if dist_inimigo < dist_inimigo_mais_proximo:
+                        dist_inimigo_mais_proximo = dist_inimigo
 
-            # 4. Verifica se é a melhor oferta do mercado até agora
+            # Se o inimigo está estritamente mais perto, ele vai roubar o peixe!
+            risco_de_perda = 0
+            if dist_inimigo_mais_proximo <= minha_distancia:
+                # Aplica uma taxa altíssima de custo para forçar o barco a desistir desse peixe
+                risco_de_perda = penalidade_concorrencia
+
+            # 4. DECISÃO: Equação final da Utility AI
+            custo_beneficio = minha_distancia - (vizinhos * peso_aglomeracao) + risco_de_perda
+
             if custo_beneficio < melhor_pontuacao_custo:
                 melhor_pontuacao_custo = custo_beneficio
                 melhor_peixe = alvo_potencial
 
         return melhor_peixe
-
+    
     def _processar_turno(self):
         # 1. Atualiza cooldowns dos peixes
         for ponto in self.pontos_pesca:
