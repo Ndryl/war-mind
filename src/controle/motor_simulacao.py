@@ -9,7 +9,7 @@ class MotorSimulacao:
     Orquestra o laço do jogo, inicializa turnos e coleta placar.
     Coordena as atualizações do grid a cada turno e move os barcos.
     """
-    def __init__(self, config: dict, mapa: Mapa, barcos: list, estrategia_padrao: IEstrategiaBusca, pontos_pesca: list):
+    def __init__(self, config: dict, mapa: Mapa, barcos: list, estrategia_padrao: IEstrategiaBusca, pontos_pesca: list, historico_boats: list):
         self.config = config
         self.mapa = mapa
         self.barcos = barcos
@@ -17,6 +17,7 @@ class MotorSimulacao:
         self.pontos_pesca = pontos_pesca
         self.limite_turnos = config['simulacao']['limite_turnos']
         self.turno_atual = 0
+        self.historico = historico_boats 
 
     def executar(self):
         for t in range(self.limite_turnos):
@@ -51,3 +52,10 @@ class MotorSimulacao:
                 pts = random.randint(1, 3) * random.randint(1, 3)
                 barco.adicionar_pontuacao(pts)
                 barco.carga += random.randint(1, 3)
+            atualizacao_historico = {
+                'turno': self.turno_atual,
+                'barco': barco.id_barco,
+                'pontuacao': barco.pontuacao
+            }
+            self.historico.append(atualizacao_historico)
+            
