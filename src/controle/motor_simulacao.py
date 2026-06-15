@@ -1,9 +1,14 @@
 import time
 import random
 import sys
-import select
-import termios
-import tty
+
+if sys.platform == 'win32':
+    import msvcrt
+else:
+    import select
+    import termios
+    import tty
+
 from src.dominio import Mapa, Porto, PontoPesca, Barco, ObstaculoVisivel, ObstaculoOculto
 from src.interface import ExibicaoTerminal
 
@@ -22,6 +27,17 @@ class MotorSimulacao:
         self.ultimos_avisos = [] 
         self.historico = historico_boats 
 
+
+    def _ler_tecla(self):
+        if sys.platform == 'win32':
+            if msvcrt.kbhit():
+                return msvcrt.getch().decode('utf-8', errors='ignore').lower()
+            return None
+        else:
+            if select.select([sys.stdin], [], [], 0.0)[0]:
+                return sys.stdin.read(1).lower()
+            return None
+
     def executar(self):
         t = 0
         pausado = False
@@ -30,15 +46,16 @@ class MotorSimulacao:
 
         ExibicaoTerminal.console.clear() 
 
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-
-        try:
+        if sys.platform != 'win32':
+            fd = sys.stdin.fileno()
+            old_settings = termios.tcgetattr(fd)
             tty.setcbreak(fd)
 
+        try:
             while t < self.limite_turnos:
-                if select.select([sys.stdin], [], [], 0.0)[0]:
-                    tecla = sys.stdin.read(1).lower()
+                tecla = self._ler_tecla()
+                
+                if tecla:
                     if tecla == 'p':
                         pausado = not pausado
                         desenhou_pausa = False
@@ -78,13 +95,13 @@ class MotorSimulacao:
                 self._processar_turno()
                 
                 for _ in range(10):
-                    if select.select([sys.stdin], [], [], 0.0)[0]:
-                        tecla = sys.stdin.read(1).lower()
-                        if tecla == 'p':
+                    tecla_espera = self._ler_tecla()
+                    if tecla_espera:
+                        if tecla_espera == 'p':
                             pausado = True
                             desenhou_pausa = False
                             break
-                        elif tecla == 'q':
+                        elif tecla_espera == 'q':
                             t = self.limite_turnos 
                             break
                     time.sleep(velocidade)
@@ -92,7 +109,8 @@ class MotorSimulacao:
                 t += 1
 
         finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+            if sys.platform != 'win32':
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
         ExibicaoTerminal.limpar_tela()
         ExibicaoTerminal.desenhar_mapa(self.mapa, self.barcos, self.turno_atual)
